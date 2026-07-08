@@ -11,9 +11,38 @@ export interface BuildIssueBodyOptions {
   aiGenerated?: boolean;
 }
 
+const IMAGE_EXT = new Set(["png", "jpg", "jpeg", "gif", "webp"]);
+const VIDEO_EXT = new Set(["mp4", "mov", "webm"]);
+
+/** URL의 pathname 마지막 세그먼트와 확장자(쿼리스트링 제거)를 뽑는다. */
+function parseAttachment(rawUrl: string): { filename: string; ext: string } {
+  let pathname: string;
+  try {
+    pathname = new URL(rawUrl).pathname;
+  } catch {
+    pathname = rawUrl.split("?")[0] ?? rawUrl;
+  }
+  const filename = pathname.split("/").filter(Boolean).pop() ?? rawUrl;
+  const dot = filename.lastIndexOf(".");
+  const ext = dot >= 0 ? filename.slice(dot + 1).toLowerCase() : "";
+  return { filename, ext };
+}
+
+/**
+ * 첨부를 확장자에 따라 렌더한다.
+ * - 이미지: 본문에서 바로 보이도록 인라인(`![]()`)
+ * - 영상/그 외: 링크(영상 인라인 재생은 GitHub 제약상 재호스팅 필요 → 후속)
+ */
 function formatAttachments(attachments: string[]): string {
   if (attachments.length === 0) return "없음";
-  return attachments.map((url) => `- [${url}](${url})`).join("\n");
+  return attachments
+    .map((url) => {
+      const { filename, ext } = parseAttachment(url);
+      if (IMAGE_EXT.has(ext)) return `![${filename}](${url})`;
+      if (VIDEO_EXT.has(ext)) return `- 🎬 [${filename}](${url})`;
+      return `- [${filename}](${url})`;
+    })
+    .join("\n\n");
 }
 
 /** 빈/공백 문자열을 undefined 로 취급한다(AI가 "" 를 반환해도 fallback 이 걸리도록). */
@@ -36,9 +65,7 @@ export function buildIssueBody(
     [
       "## Discord Context",
       "",
-      `- Reporter: ${context.reporterName} (${context.reporterId})`,
-      `- Guild ID: ${context.guildId}`,
-      `- Channel ID: ${context.channelId}`,
+      `- Reporter: ${context.reporterName}`,
       `- Message: [${context.messageUrl}](${context.messageUrl})`,
     ].join("\n"),
     `## Original Report\n\n> ${context.content.replace(/\n/g, "\n> ")}`,

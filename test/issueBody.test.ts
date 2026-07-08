@@ -47,13 +47,14 @@ describe("buildIssueBody", () => {
     }
   });
 
-  it("renders Discord context details and message link", () => {
+  it("renders reporter name and message link but hides raw ids", () => {
     const body = buildIssueBody(draft, context);
     expect(body).toContain(context.reporterName);
-    expect(body).toContain(context.reporterId);
-    expect(body).toContain(context.guildId);
-    expect(body).toContain(context.channelId);
     expect(body).toContain(context.messageUrl);
+    // 숫자 reporter id / Guild ID / Channel ID 라벨은 노출하지 않는다
+    expect(body).not.toContain(context.reporterId);
+    expect(body).not.toContain("Guild ID:");
+    expect(body).not.toContain("Channel ID:");
   });
 
   it("includes the raw original report content", () => {
@@ -109,13 +110,32 @@ describe("buildIssueBody", () => {
     expect(body).toContain("없음");
   });
 
-  it("renders attachments as markdown links when present", () => {
-    const withAttachments: ReportContext = {
-      ...context,
-      attachments: ["https://example.com/file.png"],
-    };
-    const body = buildIssueBody(draft, withAttachments);
-    expect(body).toContain("[https://example.com/file.png](https://example.com/file.png)");
+  it("renders image attachments inline (ignoring querystring in extension detection)", () => {
+    const url =
+      "https://cdn.discordapp.com/ephemeral-attachments/1524/148.png?ex=6a4fa636&is=6a4e54b6&hm=3f53&";
+    const body = buildIssueBody(draft, { ...context, attachments: [url] });
+    expect(body).toContain(`![148.png](${url})`);
+  });
+
+  it("renders video attachments as a link, not an inline image", () => {
+    const url = "https://cdn.discordapp.com/attachments/1524/clip.mp4?ex=1&is=2&hm=3&";
+    const body = buildIssueBody(draft, { ...context, attachments: [url] });
+    expect(body).toContain(`[clip.mp4](${url})`);
+    expect(body).not.toContain(`![clip.mp4]`);
+  });
+
+  it("renders other file types as a link", () => {
+    const url = "https://example.com/report.pdf";
+    const body = buildIssueBody(draft, { ...context, attachments: [url] });
+    expect(body).toContain(`- [report.pdf](${url})`);
+  });
+
+  it("renders multiple image attachments each inline", () => {
+    const a = "https://example.com/a.png";
+    const b = "https://example.com/b.jpg";
+    const body = buildIssueBody(draft, { ...context, attachments: [a, b] });
+    expect(body).toContain(`![a.png](${a})`);
+    expect(body).toContain(`![b.jpg](${b})`);
   });
 
   it("omits the AI marker by default", () => {
