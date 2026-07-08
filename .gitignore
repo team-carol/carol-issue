@@ -1,0 +1,25 @@
+# OMC 세션 상태 (세션별 임시 산출물)
+.omc/
+
+# 의존성 / 빌드 산출물
+node_modules/
+dist/
+
+# 환경 변수 / 설정
+.env
+.env.*
+!.env.example
+config.json
+
+# 시크릿 (GitHub App private key 등) — 절대 커밋 금지
+*.pem
+*.key
+key.pem
+cert.pem
+
+# 로그
+*.log
+logs/
+
+# OS / 에디터
+.DS_Store

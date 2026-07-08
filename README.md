@@ -1,4 +1,37 @@
-# carol-issue 기능명세서
+# carol-issue
+
+**carol**의 **"문의하기"** 기능을 담당하는 분리된 서비스입니다.
+
+Discord에서 들어온 제보를 받아 **AI로 GitHub Issue 초안을 생성**하고, **GitHub App으로 실제 Issue를 발행**하는 triage 서버입니다. carol 봇과는 HTTP API(OpenAPI/Scalar 계약)로만 연결되며, 공유 secret으로 인증합니다.
+
+## 프로젝트 배경
+
+| 항목 | 내용 |
+|------|------|
+| 상위 프로젝트 | [team-carol/carol](https://github.com/team-carol/carol) — maimai DX NET 프로필 Discord 봇 |
+| 이 레포 | [team-carol/carol-issue](https://github.com/team-carol/carol-issue) — 제보→GitHub Issue triage 서비스 |
+| 분리 이유 | **VM 분리**. AI 호출·GitHub App 발행이라는 별도 책임과 배포 단위를 carol 본체에서 떼어내기 위해 레포/배포를 분리했다. |
+| 연동 방식 | carol 봇이 Discord 제보를 이 서비스의 `/triage/*` API로 전달 → 인증(공유 secret) → AI draft → GitHub Issue 생성 |
+| 경계 | 이 서비스는 **Discord를 직접 다루지 않는다.** carol 봇이 Discord 컨텍스트(guild/channel/message URL, 로그, 첨부)를 수집해 API 페이로드로 넘긴다. |
+
+### carol와의 관계
+
+```
+[carol 봇]  Discord 제보 수집
+    │  guild/channel/message URL, 대화 로그, 첨부 URL
+    ▼
+[carol-issue]  POST /triage/issues  (Authorization: 공유 secret)
+    │  ① 요청 검증 → ② AI draft 생성 → ③ schema 검증
+    │  ④ GitHub App installation token → ⑤ Issue 생성
+    ▼
+[GitHub]  team-carol/carol 저장소에 Issue 발행 → issueUrl 반환
+```
+
+carol 본체 아키텍처(북마클릿 기반 프로필 동기화, SQLite, satori PNG 렌더링 등)는 상위 레포 README/AGENTS.md를 참고. 이 서비스는 그와 독립적으로 배포되는 별도 VM/컨테이너다.
+
+> 아래는 이 서비스가 구현해야 할 **기능 명세서**입니다.
+
+---
 
 ## 1. Health Check
 
