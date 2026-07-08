@@ -36,9 +36,7 @@ export function buildIssueBody(
     [
       "## Discord Context",
       "",
-      `- Reporter: ${context.reporterName} (${context.reporterId})`,
-      `- Guild ID: ${context.guildId}`,
-      `- Channel ID: ${context.channelId}`,
+      `- Reporter: ${context.reporterName}`,
       `- Message: [${context.messageUrl}](${context.messageUrl})`,
     ].join("\n"),
     `## Original Report\n\n> ${context.content.replace(/\n/g, "\n> ")}`,

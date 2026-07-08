@@ -47,13 +47,14 @@ describe("buildIssueBody", () => {
     }
   });
 
-  it("renders Discord context details and message link", () => {
+  it("renders reporter name and message link but hides raw ids", () => {
     const body = buildIssueBody(draft, context);
     expect(body).toContain(context.reporterName);
-    expect(body).toContain(context.reporterId);
-    expect(body).toContain(context.guildId);
-    expect(body).toContain(context.channelId);
     expect(body).toContain(context.messageUrl);
+    // 숫자 reporter id / Guild ID / Channel ID 라벨은 노출하지 않는다
+    expect(body).not.toContain(context.reporterId);
+    expect(body).not.toContain("Guild ID:");
+    expect(body).not.toContain("Channel ID:");
   });
 
   it("includes the raw original report content", () => {
