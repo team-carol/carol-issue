@@ -11,6 +11,7 @@ const draft: IssueDraft = {
   labels: ["bug", "triage"],
   type: "bug",
   priority: "medium",
+  needsMoreInfo: false,
 };
 
 const context: ReportContext = {
@@ -75,11 +76,32 @@ describe("buildIssueBody", () => {
       labels: [],
       type: "question",
       priority: "low",
+      needsMoreInfo: false,
     };
     const body = buildIssueBody(minimal, context);
     // details 미제공 → Details 섹션에 원문 대체
     expect(body).toContain(`## Details\n\n${context.content}`);
     expect(body).toContain("제공된 재현 절차 없음");
+  });
+
+  it("treats empty-string optional fields as absent (AI returned \"\")", () => {
+    const withEmpties: IssueDraft = {
+      ...draft,
+      details: "",
+      expected: "   ",
+      reproduction: "",
+    };
+    const body = buildIssueBody(withEmpties, context);
+    expect(body).toContain(`## Details\n\n${context.content}`);
+    expect(body).toContain("제공된 재현 절차 없음");
+    expect(body).toContain("트리아지 시 보완");
+  });
+
+  it("prepends a warning banner when needsMoreInfo is set (Layer 3)", () => {
+    const body = buildIssueBody({ ...draft, needsMoreInfo: true }, context);
+    expect(body).toContain("⚠️");
+    expect(body).toContain("추가 정보가 필요합니다");
+    expect(body.indexOf("⚠️")).toBeLessThan(body.indexOf("## Summary"));
   });
 
   it('renders "없음" for empty attachments', () => {
