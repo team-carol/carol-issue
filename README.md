@@ -425,11 +425,15 @@ docker compose up -d --build
 3. `npm run build`
 4. Docker image 빌드
 5. `ghcr.io/<owner>/carol-issue:latest` 와 커밋 SHA 태그로 GHCR push
+6. SSH로 원격 서버 접속
+7. 원격 서버에서 `docker compose -f docker-compose.tunnel.yml pull && up -d`
 
 원격 서버는 포트를 직접 열지 않고 Cloudflare Tunnel 로 붙는다.
 
+원격 서버에는 이 레포를 한 번 체크아웃해 두고, `.env`를 채워 둔다.
+`docker-compose.tunnel.yml`은 그 디렉터리에서 실행된다.
+
 ```bash
-export CF_TUNNEL_TOKEN=...
 docker compose -f docker-compose.tunnel.yml pull
 docker compose -f docker-compose.tunnel.yml up -d
 ```
@@ -438,6 +442,16 @@ docker compose -f docker-compose.tunnel.yml up -d
 `docker-compose.tunnel.yml`은 전용 `tunnel` 네트워크에서 `carol-issue` 와 `cloudflared` 를 묶고, 서버 포트를 publish하지 않는 배포용 compose 파일이다.
 
 Cloudflare Tunnel 대시보드에서는 origin service 를 `http://carol-issue:3000` 으로 두면 된다.
+
+### GitHub Secrets
+
+workflow 배포 단계에는 다음 secrets가 필요하다.
+
+* `DEPLOY_HOST`
+* `DEPLOY_USER`
+* `DEPLOY_KEY`
+* `DEPLOY_PATH`
+* `DEPLOY_PORT` - 선택, 기본값 `22`
 
 ---
 
