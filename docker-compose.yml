@@ -1,0 +1,33 @@
+services:
+  carol-issue:
+    build: .
+    image: carol-issue:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      PORT: 3000
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://localhost:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+  # README 15장: Cloudflare Tunnel 로 공개 HTTPS 제공(열린 포트 없이).
+  # CF_TUNNEL_TOKEN 을 .env 에 넣고 아래 주석을 해제하면 활성화된다.
+  # cloudflared:
+  #   image: cloudflare/cloudflared:latest
+  #   restart: unless-stopped
+  #   command: tunnel --no-autoupdate run
+  #   environment:
+  #     TUNNEL_TOKEN: ${CF_TUNNEL_TOKEN}
+  #   depends_on:
+  #     carol-issue:
+  #       condition: service_healthy
