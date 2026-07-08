@@ -433,6 +433,12 @@ docker compose up -d --build
 원격 서버에는 이 레포를 한 번 체크아웃해 두고, `.env`를 채워 둔다.
 `docker-compose.tunnel.yml`은 그 디렉터리에서 실행된다.
 
+서버에 Docker가 없다면 레포 루트에서 아래 스크립트를 먼저 실행한다.
+
+```bash
+sudo bash ./setup.sh
+```
+
 ```bash
 docker compose -f docker-compose.tunnel.yml pull
 docker compose -f docker-compose.tunnel.yml up -d
