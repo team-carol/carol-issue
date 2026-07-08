@@ -1,0 +1,14 @@
+node_modules
+dist
+.git
+.gitignore
+.omc
+test
+vitest.config.ts
+.env
+.env.*
+!.env.example
+*.md
+Dockerfile
+docker-compose.yml
+.DS_Store
