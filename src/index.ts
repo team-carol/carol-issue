@@ -1,13 +1,27 @@
 import { serve } from "@hono/node-server";
 import { createApp } from "./app.js";
+import { loadConfig } from "./config/env.js";
+import { logger } from "./lib/logger.js";
 
 /**
- * 엔트리 포인트. env 로드/검증은 feature/config-and-errors 에서 추가된다.
- * scaffold 단계에서는 PORT 환경변수(기본 3000)로 서버를 띄운다.
+ * 엔트리 포인트. 필수 env 검증 → 실패 시 즉시 종료(README 13장).
  */
-const port = Number(process.env.PORT ?? 3000);
-const app = createApp();
+function main(): void {
+  let config;
+  try {
+    config = loadConfig();
+  } catch (err) {
+    logger.error("startup failed: invalid configuration", {
+      message: err instanceof Error ? err.message : String(err),
+    });
+    process.exit(1);
+  }
 
-serve({ fetch: app.fetch, port }, (info) => {
-  console.log(`carol-issue listening on http://localhost:${info.port}`);
-});
+  const app = createApp();
+
+  serve({ fetch: app.fetch, port: config.port }, (info) => {
+    logger.info(`carol-issue listening on ${config.baseUrl}`, { port: info.port });
+  });
+}
+
+main();
