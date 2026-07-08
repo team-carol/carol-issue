@@ -17,7 +17,7 @@ const validContext: ReportContext = {
 
 const validDraftJson = JSON.stringify({
   title: "버그 리포트",
-  body: "사용자가 버그를 발견했습니다.",
+  summary: "사용자가 버그를 발견했습니다.",
   labels: ["bug"],
   type: "bug",
   priority: "medium",
@@ -35,7 +35,7 @@ describe("generateDraft", () => {
 
     expect(draft).toEqual({
       title: "버그 리포트",
-      body: "사용자가 버그를 발견했습니다.",
+      summary: "사용자가 버그를 발견했습니다.",
       labels: ["bug"],
       type: "bug",
       priority: "medium",

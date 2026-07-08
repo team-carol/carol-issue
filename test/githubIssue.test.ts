@@ -9,7 +9,7 @@ import type { IssueDraft, ReportContext } from "../src/schemas/triage.js";
 
 const draft: IssueDraft = {
   title: "프로필 동기화 실패",
-  body: "동기화 안됨",
+  summary: "동기화 안됨",
   labels: ["bug", "triage"],
   type: "bug",
   priority: "medium",

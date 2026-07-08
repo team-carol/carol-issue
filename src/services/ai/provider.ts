@@ -30,6 +30,8 @@ export function createOpenAiProvider(config: Config): AiProvider {
             { role: "user", content: user },
           ],
           response_format: { type: "json_object" },
+          // 구조화 draft는 짧다. 출력 토큰 상한으로 비용/폭주 방지.
+          max_tokens: 1000,
         });
 
         const content = response.choices[0]?.message?.content;

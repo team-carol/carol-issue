@@ -11,15 +11,22 @@ import { AppError } from "../../errors.js";
 import { logger } from "../../lib/logger.js";
 import type { AiProvider } from "./provider.js";
 
-const SYSTEM_PROMPT = `You are an assistant that converts a Discord bug/feature report into a GitHub issue draft.
-Read the report context provided by the user and respond with ONLY a single JSON object (no markdown, no code fences, no extra text) with exactly these fields:
-- "title": a short, clear issue title (string)
-- "body": a detailed issue body written in Markdown, summarizing the report (string)
-- "labels": an array of relevant short label strings (string[])
+const SYSTEM_PROMPT = `You are a triage assistant that turns a Discord bug/feature report into a structured GitHub issue draft.
+Respond with ONLY a single JSON object (no markdown, no code fences, no extra text) with these fields:
+- "title": short, clear issue title (string, required)
+- "summary": 1-2 sentence summary of the problem (string, required)
+- "details": fuller description if useful (string, optional — omit if it would just repeat the summary or the original report)
+- "reproduction": steps to reproduce (string, optional — include only if inferable)
+- "expected": expected behavior (string, optional)
+- "actual": actual behavior (string, optional)
+- "labels": array of relevant short label strings (string[])
 - "type": one of "bug", "feature", "question", "task", "other"
 - "priority": one of "low", "medium", "high", "critical"
 
-Write "title" and "body" in the SAME language as the report content (e.g. if the report is in Korean, write them in Korean). Keep "type" and "priority" as the exact English enum values above.
+Rules:
+- Do NOT restate metadata (reporter name/id, guild id, channel id, message URL, attachments, the raw original report). Those are added automatically by a template — including them wastes space.
+- Keep each field concise. Omit optional fields you cannot fill instead of writing placeholders.
+- Write text fields in the SAME language as the report content (Korean report -> Korean text). Keep "type" and "priority" as the exact English enum values above.
 Respond with the JSON object only.`;
 
 function buildUserPrompt(context: ReportContext): string {
