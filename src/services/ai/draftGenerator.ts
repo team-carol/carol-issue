@@ -19,6 +19,7 @@ Read the report context provided by the user and respond with ONLY a single JSON
 - "type": one of "bug", "feature", "question", "task", "other"
 - "priority": one of "low", "medium", "high", "critical"
 
+Write "title" and "body" in the SAME language as the report content (e.g. if the report is in Korean, write them in Korean). Keep "type" and "priority" as the exact English enum values above.
 Respond with the JSON object only.`;
 
 function buildUserPrompt(context: ReportContext): string {
