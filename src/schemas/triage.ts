@@ -1,0 +1,90 @@
+import { z } from "@hono/zod-openapi";
+
+/**
+ * README 10장(요청 검증) + 3·4·5장의 입출력 스키마.
+ * zod 스키마 하나로 요청 검증 + OpenAPI 문서 + 타입을 동기화한다.
+ */
+
+/** Discord snowflake ID (17~20자리 숫자). */
+const snowflake = z
+  .string()
+  .regex(/^\d{17,20}$/, "must be a Discord snowflake id");
+
+/** Discord 메시지 URL. */
+const discordMessageUrl = z
+  .string()
+  .url()
+  .regex(
+    /^https:\/\/(?:\w+\.)?discord(?:app)?\.com\/channels\/\d+\/\d+\/\d+$/,
+    "must be a Discord message URL",
+  );
+
+export const IssueType = z.enum(["bug", "feature", "question", "task", "other"]);
+export const IssuePriority = z.enum(["low", "medium", "high", "critical"]);
+
+/** 제보자/Discord 컨텍스트 — draft 생성과 issue 생성 요청이 공유. */
+export const ReportContext = z
+  .object({
+    content: z.string().trim().min(1, "content must not be empty").max(10_000),
+    reporterId: snowflake,
+    reporterName: z.string().trim().min(1).max(100),
+    guildId: snowflake,
+    channelId: snowflake,
+    messageUrl: discordMessageUrl,
+    conversationLog: z.string().max(50_000).optional(),
+    attachments: z.array(z.string().url()).max(50).default([]),
+  })
+  .openapi("ReportContext");
+
+/** AI 또는 클라이언트가 만든 Issue 초안. */
+export const IssueDraft = z
+  .object({
+    title: z.string().trim().min(1).max(256),
+    body: z.string().trim().min(1).max(65_536),
+    labels: z.array(z.string().trim().min(1)).max(20).default([]),
+    type: IssueType,
+    priority: IssuePriority,
+  })
+  .openapi("IssueDraft");
+
+/** POST /triage/draft 요청 (README 3장). */
+export const TriageDraftRequest = ReportContext.openapi("TriageDraftRequest");
+
+/** POST /triage/draft 응답. */
+export const TriageDraftResponse = z
+  .object({ draft: IssueDraft })
+  .openapi("TriageDraftResponse");
+
+/**
+ * POST /triage/issues 요청 (README 4·5장).
+ * draft 를 함께 주면 AI 없이 그 초안으로 Issue 를 생성한다(5장 직접 생성).
+ */
+export const CreateIssueRequest = ReportContext.extend({
+  draft: IssueDraft.optional(),
+}).openapi("CreateIssueRequest");
+
+/** POST /triage/issues 응답 (README 4장). */
+export const CreateIssueResponse = z
+  .object({
+    issueNumber: z.number().int().positive(),
+    issueUrl: z.string().url(),
+  })
+  .openapi("CreateIssueResponse");
+
+/** 통일된 에러 응답 (README 11장). */
+export const ErrorResponse = z
+  .object({
+    error: z.object({
+      code: z.string(),
+      message: z.string(),
+    }),
+  })
+  .openapi("ErrorResponse");
+
+export type ReportContext = z.infer<typeof ReportContext>;
+export type IssueDraft = z.infer<typeof IssueDraft>;
+export type TriageDraftRequest = z.infer<typeof TriageDraftRequest>;
+export type CreateIssueRequest = z.infer<typeof CreateIssueRequest>;
+export type CreateIssueResponse = z.infer<typeof CreateIssueResponse>;
+export type IssueType = z.infer<typeof IssueType>;
+export type IssuePriority = z.infer<typeof IssuePriority>;
