@@ -58,6 +58,11 @@ export const IssueDraft = z
     labels: z.array(z.string().trim().min(1)).max(20).default([]),
     type: IssueType,
     priority: IssuePriority,
+    /**
+     * 제보가 짧거나 애매해 근거 있는 세부 내용을 채울 수 없을 때 true.
+     * AI가 자기신고하며, 코드의 희소성 게이트도 이 값을 켠다(Layer 2·3).
+     */
+    needsMoreInfo: z.boolean().default(false),
   })
   .openapi("IssueDraft");
 

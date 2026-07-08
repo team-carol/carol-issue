@@ -10,6 +10,7 @@ import type { ReportContext } from "../../schemas/triage.js";
 import { AppError } from "../../errors.js";
 import { logger } from "../../lib/logger.js";
 import type { AiProvider } from "./provider.js";
+import { enforceGroundingGuardrail } from "./guardrail.js";
 
 const SYSTEM_PROMPT = `You are a triage assistant that turns a Discord bug/feature report into a structured GitHub issue draft.
 Respond with ONLY a single JSON object (no markdown, no code fences, no extra text) with these fields:
@@ -22,11 +23,14 @@ Respond with ONLY a single JSON object (no markdown, no code fences, no extra te
 - "labels": array of relevant short label strings (string[])
 - "type": one of "bug", "feature", "question", "task", "other"
 - "priority": one of "low", "medium", "high", "critical"
+- "needsMoreInfo": boolean — set true when the report is too short/vague to be actionable
 
 Rules:
-- Do NOT restate metadata (reporter name/id, guild id, channel id, message URL, attachments, the raw original report). Those are added automatically by a template — including them wastes space.
-- Keep each field concise. Omit optional fields you cannot fill instead of writing placeholders.
-- Write text fields in the SAME language as the report content (Korean report -> Korean text). Keep "type" and "priority" as the exact English enum values above.
+- Ground EVERY field ONLY in facts explicitly stated in the report. NEVER invent reproduction steps, error messages, numbers, stack traces, or expected/actual behavior that are not stated. Fabrication is worse than omission.
+- Omit any optional field (details/reproduction/expected/actual) you cannot ground in the report. It is correct to omit them for a short report.
+- If the report is too sparse to be actionable, set "needsMoreInfo": true, keep "summary" a faithful paraphrase of the report, and do NOT fabricate any details.
+- Do NOT restate metadata (reporter name/id, guild id, channel id, message URL, attachments, the raw original report). A template adds those automatically.
+- Keep each field concise. Write text fields in the SAME language as the report content (Korean report -> Korean text). Keep "type" and "priority" as the exact English enum values above.
 Respond with the JSON object only.`;
 
 function buildUserPrompt(context: ReportContext): string {
@@ -76,7 +80,10 @@ export async function generateDraft(
     );
   }
 
-  logger.info("draft generated");
+  // Layer 3: 희소 제보면 투기적 필드를 강제 제거(할루시네이션 백스톱)
+  const guarded = enforceGroundingGuardrail(result.data, context);
 
-  return result.data;
+  logger.info("draft generated", { needsMoreInfo: guarded.needsMoreInfo });
+
+  return guarded;
 }

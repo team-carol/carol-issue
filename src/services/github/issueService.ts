@@ -8,6 +8,8 @@ import { buildIssueBody } from "../template/issueBody.js";
 
 /** README 9장. Issue에 항상 붙는 기본 label. */
 const DEFAULT_LABEL = "triage";
+/** 희소 제보(추가 정보 필요)에 붙는 시스템 label. */
+const NEEDS_INFO_LABEL = "needs-info";
 
 /**
  * GithubClient가 필요로 하는 최소 인터페이스.
@@ -66,14 +68,17 @@ export function createOctokitClient(config: Config): GithubClient {
   };
 }
 
-/** 존재하는 repo label로만 필터링하고, 기본 label(triage)을 항상 포함시킨다. */
-function resolveLabels(requested: string[], existing: string[]): string[] {
+/**
+ * AI 추천 label은 존재하는 repo label로만 필터링하되(README 9장),
+ * 시스템 label(triage, 필요 시 needs-info)은 존재 여부와 무관하게 항상 포함한다.
+ */
+function resolveLabels(requested: string[], existing: string[], systemLabels: string[]): string[] {
   const existingSet = new Set(existing);
-  const filtered = requested.filter((label) => existingSet.has(label));
-  const withDefault = filtered.includes(DEFAULT_LABEL)
-    ? filtered
-    : [...filtered, DEFAULT_LABEL];
-  return withDefault.length > 0 ? withDefault : [DEFAULT_LABEL];
+  const result = requested.filter((label) => existingSet.has(label));
+  for (const sys of systemLabels) {
+    if (!result.includes(sys)) result.push(sys);
+  }
+  return result;
 }
 
 export interface CreateGithubIssueParams {
@@ -97,7 +102,8 @@ export async function createGithubIssue(
   const body = buildIssueBody(draft, context, { aiGenerated });
 
   const existingLabels = await client.listRepoLabels(owner, repo);
-  const labels = resolveLabels(draft.labels, existingLabels);
+  const systemLabels = draft.needsMoreInfo ? [DEFAULT_LABEL, NEEDS_INFO_LABEL] : [DEFAULT_LABEL];
+  const labels = resolveLabels(draft.labels, existingLabels, systemLabels);
 
   try {
     const issue = await client.createIssue({
