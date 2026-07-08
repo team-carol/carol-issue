@@ -14,17 +14,33 @@ export interface BuildIssueBodyOptions {
 const IMAGE_EXT = new Set(["png", "jpg", "jpeg", "gif", "webp"]);
 const VIDEO_EXT = new Set(["mp4", "mov", "webm"]);
 
-/** URL의 pathname 마지막 세그먼트와 확장자(쿼리스트링 제거)를 뽑는다. */
+/** 마크다운 링크/이미지 문법을 깨거나 주입에 쓰일 수 있는 문자를 백슬래시 escape. */
+function escapeMarkdownText(text: string): string {
+  return text.replace(/[\\`*_{}[\]()<>!#|]/g, "\\$&");
+}
+
+/**
+ * URL의 pathname 마지막 세그먼트에서 파일명과 확장자를 뽑는다(쿼리스트링 제거).
+ * path 세그먼트가 없거나 URL 파싱 실패 시 확장자 없는 "attachment" 로 처리해
+ * 전체 URL이 파일명으로 새거나 이미지로 오판되는 것을 막는다.
+ */
 function parseAttachment(rawUrl: string): { filename: string; ext: string } {
-  let pathname: string;
+  let segment: string | undefined;
   try {
-    pathname = new URL(rawUrl).pathname;
+    segment = new URL(rawUrl).pathname.split("/").filter(Boolean).pop();
   } catch {
-    pathname = rawUrl.split("?")[0] ?? rawUrl;
+    segment = undefined;
   }
-  const filename = pathname.split("/").filter(Boolean).pop() ?? rawUrl;
+  if (!segment) return { filename: "attachment", ext: "" };
+
+  let filename = segment;
+  try {
+    filename = decodeURIComponent(segment);
+  } catch {
+    // 잘못된 % 시퀀스는 원문 유지
+  }
   const dot = filename.lastIndexOf(".");
-  const ext = dot >= 0 ? filename.slice(dot + 1).toLowerCase() : "";
+  const ext = dot > 0 ? filename.slice(dot + 1).toLowerCase() : "";
   return { filename, ext };
 }
 
@@ -32,15 +48,17 @@ function parseAttachment(rawUrl: string): { filename: string; ext: string } {
  * 첨부를 확장자에 따라 렌더한다.
  * - 이미지: 본문에서 바로 보이도록 인라인(`![]()`)
  * - 영상/그 외: 링크(영상 인라인 재생은 GitHub 제약상 재호스팅 필요 → 후속)
+ * 파일명은 escape, URL은 `<...>` 로 감싸 마크다운 깨짐/주입을 방지한다.
  */
 function formatAttachments(attachments: string[]): string {
   if (attachments.length === 0) return "없음";
   return attachments
     .map((url) => {
       const { filename, ext } = parseAttachment(url);
-      if (IMAGE_EXT.has(ext)) return `![${filename}](${url})`;
-      if (VIDEO_EXT.has(ext)) return `- 🎬 [${filename}](${url})`;
-      return `- [${filename}](${url})`;
+      const name = escapeMarkdownText(filename);
+      if (IMAGE_EXT.has(ext)) return `![${name}](<${url}>)`;
+      if (VIDEO_EXT.has(ext)) return `- 🎬 [${name}](<${url}>)`;
+      return `- [${name}](<${url}>)`;
     })
     .join("\n\n");
 }
