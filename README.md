@@ -418,7 +418,7 @@ docker compose up -d --build
 
 ### CI/CD 배포
 
-이 레포는 `cicd` 브랜치에 push 되면 GitHub Actions가 다음 순서로 동작한다.
+이 레포는 `master` 브랜치에 push 되면 GitHub Actions가 다음 순서로 동작한다.
 
 1. `npm ci`
 2. `npm test`
