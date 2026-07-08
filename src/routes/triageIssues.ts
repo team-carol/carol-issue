@@ -21,6 +21,7 @@ const route = createRoute({
   path: "/triage/issues",
   summary: "GitHub Issue 생성",
   description: "제보로부터(또는 전달된 draft로) GitHub Issue를 생성한다.",
+  security: [{ CarolSecret: [] }],
   request: {
     body: {
       required: true,

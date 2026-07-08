@@ -16,6 +16,7 @@ const route = createRoute({
   path: "/triage/draft",
   summary: "Issue Draft 생성",
   description: "Discord 제보 내용을 받아 AI로 GitHub Issue 초안을 생성한다.",
+  security: [{ CarolSecret: [] }],
   request: {
     body: {
       required: true,
