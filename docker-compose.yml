@@ -1,20 +1,20 @@
 services:
   carol-issue:
     build: .
-    image: carol-issue:latest
+    image: ${CAROL_ISSUE_IMAGE:-ghcr.io/team-carol/carol-issue:latest}
     restart: unless-stopped
     env_file:
       - .env
     ports:
-      - "${PORT:-3000}:3000"
+      - "${PORT:-3000}:${PORT:-3000}"
     environment:
-      PORT: 3000
+      PORT: ${PORT:-3000}
     healthcheck:
       test:
         - CMD
         - node
         - -e
-        - "fetch('http://localhost:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+        - "fetch('http://localhost:' + (process.env.PORT || 3000) + '/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
       interval: 30s
       timeout: 5s
       start_period: 10s

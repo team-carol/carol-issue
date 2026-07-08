@@ -410,6 +410,35 @@ Docker 기반 실행을 지원한다.
 * `/health` 기반 healthcheck
 * Cloudflare Tunnel 구성 지원
 
+### 로컬 실행
+
+```bash
+docker compose up -d --build
+```
+
+### CI/CD 배포
+
+이 레포는 `cicd` 브랜치에 push 되면 GitHub Actions가 다음 순서로 동작한다.
+
+1. `npm ci`
+2. `npm test`
+3. `npm run build`
+4. Docker image 빌드
+5. `ghcr.io/<owner>/carol-issue:latest` 와 커밋 SHA 태그로 GHCR push
+
+원격 서버는 포트를 직접 열지 않고 Cloudflare Tunnel 로 붙는다.
+
+```bash
+export CF_TUNNEL_TOKEN=...
+docker compose -f docker-compose.tunnel.yml pull
+docker compose -f docker-compose.tunnel.yml up -d
+```
+
+`docker-compose.yml`은 로컬 개발용 build와 원격 pull을 같이 지원하도록 `image`와 `build`를 함께 둔다.
+`docker-compose.tunnel.yml`은 전용 `tunnel` 네트워크에서 `carol-issue` 와 `cloudflared` 를 묶고, 서버 포트를 publish하지 않는 배포용 compose 파일이다.
+
+Cloudflare Tunnel 대시보드에서는 origin service 를 `http://carol-issue:3000` 으로 두면 된다.
+
 ---
 
 ## 16. MVP 필수 기능
@@ -442,4 +471,3 @@ MVP 이후 추가할 수 있는 기능은 다음과 같다.
 * 로그 파일 요약
 * rate limit 적용
 * audit log 저장
-
