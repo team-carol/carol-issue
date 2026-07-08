@@ -16,6 +16,7 @@ config.json
 *.key
 key.pem
 cert.pem
+secrets/
 
 # 로그
 *.log
