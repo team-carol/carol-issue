@@ -17,7 +17,7 @@ function main(): void {
     process.exit(1);
   }
 
-  const app = createApp();
+  const app = createApp(config);
 
   serve({ fetch: app.fetch, port: config.port }, (info) => {
     logger.info(`carol-issue listening on ${config.baseUrl}`, { port: info.port });
