@@ -6,6 +6,8 @@ services:
       - .env
     environment:
       PORT: ${PORT:-3000}
+    volumes:
+      - ./secrets:/app/secrets:ro
     healthcheck:
       test:
         - CMD
