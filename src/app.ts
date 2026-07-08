@@ -7,6 +7,7 @@ import { logger } from "./lib/logger.js";
 import { createAuthMiddleware } from "./middleware/auth.js";
 import { registerTriageDraft } from "./routes/triageDraft.js";
 import { registerTriageIssues } from "./routes/triageIssues.js";
+import { registerDocs } from "./routes/docs.js";
 
 /**
  * carol-issue triage 서버의 Hono 앱을 조립한다.
@@ -48,6 +49,7 @@ export function createApp(config: Config, deps: AppDeps = {}): OpenAPIHono {
   app.route("/", health);
   registerTriageDraft(app, config, deps);
   registerTriageIssues(app, config, deps);
+  registerDocs(app, config);
 
   return app;
 }
