@@ -17,7 +17,7 @@ const validContext = {
 
 const validDraft = {
   title: "프로필 동기화 실패",
-  body: "동기화 버튼을 눌러도 반응이 없음",
+  summary: "동기화 버튼을 눌러도 반응이 없음",
   labels: ["bug", "triage"],
   type: "bug",
   priority: "medium",

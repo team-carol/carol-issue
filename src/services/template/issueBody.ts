@@ -22,11 +22,11 @@ export function buildIssueBody(
   opts: BuildIssueBodyOptions = {},
 ): string {
   const sections = [
-    `## Summary\n\n${draft.title}`,
-    `## Details\n\n${draft.body}`,
-    `## Steps to Reproduce\n\n${context.conversationLog ?? "제공된 재현 절차 없음"}`,
-    `## Expected Behavior\n\n(제보 내용을 바탕으로 트리아지 시 보완)`,
-    `## Actual Behavior\n\n${draft.body}`,
+    `## Summary\n\n${draft.summary}`,
+    `## Details\n\n${draft.details ?? context.content}`,
+    `## Steps to Reproduce\n\n${draft.reproduction ?? context.conversationLog ?? "제공된 재현 절차 없음"}`,
+    `## Expected Behavior\n\n${draft.expected ?? "(제보 내용을 바탕으로 트리아지 시 보완)"}`,
+    `## Actual Behavior\n\n${draft.actual ?? "(제보 내용을 바탕으로 트리아지 시 보완)"}`,
     [
       "## Discord Context",
       "",

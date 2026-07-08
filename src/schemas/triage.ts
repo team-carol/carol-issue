@@ -36,11 +36,25 @@ export const ReportContext = z
   })
   .openapi("ReportContext");
 
-/** AI 또는 클라이언트가 만든 Issue 초안. */
+/**
+ * AI 또는 클라이언트가 만든 Issue 초안.
+ *
+ * 고정 스캐폴딩·Discord 메타데이터·원문은 issueBody 템플릿이 코드로 조립하므로,
+ * 여기에는 "판단이 필요한 의미 필드"만 담는다(토큰 절감 + README 8장 구조 보장).
+ */
 export const IssueDraft = z
   .object({
     title: z.string().trim().min(1).max(256),
-    body: z.string().trim().min(1).max(65_536),
+    /** 1~2문장 요약 (README 8장 Summary). */
+    summary: z.string().trim().min(1).max(2_000),
+    /** 상세 설명 (Details). 없으면 템플릿이 원문으로 대체. */
+    details: z.string().trim().max(20_000).optional(),
+    /** 재현 방법 (Steps to Reproduce). */
+    reproduction: z.string().trim().max(10_000).optional(),
+    /** 기대 동작 (Expected Behavior). */
+    expected: z.string().trim().max(10_000).optional(),
+    /** 실제 동작 (Actual Behavior). */
+    actual: z.string().trim().max(10_000).optional(),
     labels: z.array(z.string().trim().min(1)).max(20).default([]),
     type: IssueType,
     priority: IssuePriority,
